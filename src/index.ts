@@ -70,12 +70,12 @@ app.use("/api/user", verifyroute);  // ✅ Now routes to /api/user/verify
 //     }
 //   });
 // });
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://chatfrontend-git-main-ahmed-hassans-projects-96c42d63.vercel.app");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
-  next();
-});
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "https://chatfrontend-git-main-ahmed-hassans-projects-96c42d63.vercel.app");
+//   res.header("Access-Control-Allow-Credentials", "true");
+//   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
+//   next();
+// });
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
