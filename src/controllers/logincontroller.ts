@@ -31,13 +31,13 @@ const logincontroller = async (req: Request, res: Response) => {
     const token = user.generateAuthToken();
     
     // Set cookie
-    res.cookie("authToken", token, {
-      httpOnly: true,  // Recommended for security
-      // secure: process.env.NODE_ENV === "production",
-      sameSite: "lax", // or "strict" for better security
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
+   res.cookie("authToken", token, {
+  httpOnly: true,
+   // Required for HTTPS
+  sameSite: "none", // Required for cross-origin cookies
+  domain: "https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app", // Replace with your domain (e.g., ".vercel.app")
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
     // Also send token in response for clients that prefer that
     res.status(200).json({ 
       message: "Login successful", 
