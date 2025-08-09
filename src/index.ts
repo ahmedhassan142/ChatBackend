@@ -31,13 +31,14 @@ const corsOptions = {
   credentials: true, // Required for cookies
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
 };
+app.options("*", cors(corsOptions)); 
 
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
 
 // Handle preflight requests
-app.options("*", cors(corsOptions)); // Allow all OPTIONS requests
+// Allow all OPTIONS requests
 
 // Routes
 app.use("/api/user", userroute);
