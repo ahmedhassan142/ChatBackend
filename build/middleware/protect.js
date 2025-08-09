@@ -19,19 +19,31 @@ function protect(req) {
         return new Promise((resolve, reject) => {
             var _a;
             const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.authToken;
-            if (token) {
-                jsonwebtoken_1.default.verify(token, process.env.JWTPRIVATEKEY, {}, (err, userData) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    else {
-                        resolve(userData);
-                    }
-                });
+            if (!token) {
+                reject(new Error("No token provided"));
+                return;
             }
-            else {
-                reject("no token");
+            if (!process.env.JWTPRIVATEKEY) {
+                reject(new Error("JWT secret key not configured"));
+                return;
             }
+            jsonwebtoken_1.default.verify(token, process.env.JWTPRIVATEKEY, (err, decoded) => {
+                if (err) {
+                    reject(new Error(`Token verification failed: ${err.message}`));
+                    return;
+                }
+                // Type guard for JWTUserData
+                if (decoded && typeof decoded === 'object' &&
+                    '_id' in decoded &&
+                    'firstName' in decoded &&
+                    'lastName' in decoded &&
+                    'email' in decoded) {
+                    resolve(decoded);
+                }
+                else {
+                    reject(new Error("Invalid token payload structure"));
+                }
+            });
         });
     });
 }
