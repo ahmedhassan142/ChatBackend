@@ -14,49 +14,28 @@ interface CustomWebSocket extends WebSocket {
 
 export const createWebSocketServer = (server: Server) => {
 
+// In your backend WebSocket server creation:
 const wss = new WebSocketServer({
   server,
-  path: '/ws', // ✅ Changed from '/wss' to '/ws'
-  verifyClient: (info: { req: IncomingMessage }, done: (result: boolean, code?: number, message?: string) => void) => {
+  path: '/ws', // Explicit path
+  verifyClient: (info, done) => {
     try {
-      if (!info.req.url || !info.req.headers.host) {
-        return done(false, 400, 'Bad request');
-      }
-
-      // Secure token extraction
-      const getToken = (req: IncomingMessage): string | null => {
-        try {
-          const host = req.headers['x-forwarded-host'] || req.headers.host || 'chatapp-backend-jyt9.onrender.com';
-          const url = new URL(req.url || '', `https://${host}`); // ✅ Force HTTPS
-          const tokenParam = url.searchParams.get('token');
-          if (tokenParam) return tokenParam;
-
-          const cookieHeader = req.headers.cookie;
-          if (!cookieHeader) return null;
-
-          const cookies = cookieHeader.split(';').map(c => c.trim());
-          const authCookie = cookies.find(c => c.startsWith('authToken='));
-          return authCookie?.split('=')[1] || null;
-        } catch (error) {
-          console.error('Token extraction error:', error);
-          return null;
-        }
-      };
-
-      const token = getToken(info.req);
+      const token = new URL(info.req.url || '', `wss://${info.req.headers.host}`)
+        .searchParams.get('token');
+      
       if (!token) {
-        return done(false, 401, 'Authentication token required');
+        return done(false, 401, 'Token required');
       }
 
-      jwt.verify(token, process.env.JWTPRIVATEKEY!, (err: Error | null, decoded: any) => {
+      jwt.verify(token, process.env.JWTPRIVATEKEY!, (err, decoded) => {
         if (err) {
-          console.error('Token verification failed:', err);
+          console.error('JWT verify error:', err);
           return done(false, 403, 'Invalid token');
         }
         done(true);
       });
     } catch (error) {
-      console.error('Client verification error:', error);
+      console.error('Verify client error:', error);
       done(false, 400, 'Bad request');
     }
   }
