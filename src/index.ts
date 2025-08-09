@@ -28,10 +28,14 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: [process.env.NEXT_PUBLIC_BASE_URL|| 'https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app'],
-     methods: ["GET", "POST", "PUT", "DELETE"], // Your Next.js URL
-    credentials: true,
-     allowedHeaders: ['Content-Type', 'Authorization','Cookie'] // Required for cookies/sessions
+    origin: [
+      "https://chatfrontend-yqkc.vercel.app", // Production URL
+      "https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app", // Preview URL
+      process.env.NEXT_PUBLIC_BASE_URL||"", // Fallback (e.g., localhost)
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // Required for cookies
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
   })
 );
 

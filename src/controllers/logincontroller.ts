@@ -31,11 +31,11 @@ const logincontroller = async (req: Request, res: Response) => {
     const token = user.generateAuthToken();
     
     // Set cookie
-   res.cookie("authToken", token, {
+  res.cookie("authToken", token, {
   httpOnly: true,
-   // Required for HTTPS
-  sameSite: "none", // Required for cross-origin cookies
-  domain: "https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app", // Replace with your domain (e.g., ".vercel.app")
+  // Must be true in production
+  sameSite: "none", // Required for cross-origin
+  domain: ".vercel.app", // Parent domain for all Vercel deployments
   maxAge: 7 * 24 * 60 * 60 * 1000,
 });
     // Also send token in response for clients that prefer that
