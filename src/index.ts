@@ -22,22 +22,22 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const corsOptions = {
+  origin: [
+    "https://chatfrontend-yqkc.vercel.app", // Production URL
+    "https://chatfrontend-git-main-ahmed-hassans-projects-96c42d63.vercel.app" // Preview URL
+     // For local testing
+  ],
+  credentials: true, // Required for cookies
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+};
 
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: [
-      "https://chatfrontend-yqkc.vercel.app", // Production URL
-      "https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app", // Preview URL
-      process.env.NEXT_PUBLIC_BASE_URL||"", // Fallback (e.g., localhost)
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, // Required for cookies
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-  })
-);
+
+// Handle preflight requests
+app.options("*", cors(corsOptions)); // Allow all OPTIONS requests
 
 // Routes
 app.use("/api/user", userroute);
@@ -70,6 +70,12 @@ app.use("/api/user", verifyroute);  // ✅ Now routes to /api/user/verify
 //     }
 //   });
 // });
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://chatfrontend-git-main-ahmed-hassans-projects-96c42d63.vercel.app");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
+  next();
+});
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
