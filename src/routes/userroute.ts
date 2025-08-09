@@ -18,7 +18,7 @@ router.get("/profile", profileController);
 router.get("/messages/:userId", getMessages);
 
 router.get("/people", peoplecontroller);
-router.get("/verify", verifyEmail);
+
 router.put("/profile/update", profileUpdate);
 router.delete('/messages/clear-conversation',clearConversation);
 // In your auth routes

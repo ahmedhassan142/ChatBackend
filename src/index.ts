@@ -10,6 +10,7 @@ import userroute from "./routes/userroute.js";
 import avatarroute from "./routes/avatarroute.js";
 import cookieParser from "cookie-parser";
 import { createWebSocketServer } from "./wsserver.js";
+import contactroute from './routes/contactroute.js'
 
 import verifyroute from "./routes/verifyroute.js";
 // const __filename = fileURLToPath(import.meta.url);
@@ -43,7 +44,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/user", userroute);
 app.use("/api/avatar", avatarroute);
-app.use("/api/contact", avatarroute);
+app.use("/api/contact", contactroute);
 
 // Add this with other routes
 app.use("/api/user", verifyroute);  // ✅ Now routes to /api/user/verify
