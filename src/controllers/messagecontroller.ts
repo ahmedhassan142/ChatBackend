@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import { protect } from "../middleware/protect.js";
 import { Message } from "../models/message.js";
+import jwt from 'jsonwebtoken'
 
 interface JWTUserData {
   _id: string;
@@ -11,7 +12,13 @@ interface JWTUserData {
 export const getMessages = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const userData = await protect(req) as JWTUserData;
+   
+   const token = req.cookies?.authToken || req.headers.authorization?.split(" ")[1];
+      if (!token) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+  
+      const userData = jwt.verify(token, process.env.JWTPRIVATEKEY as string) as JWTUserData;
     
     const ourUserId = userData._id;
     const messages = await Message.find({

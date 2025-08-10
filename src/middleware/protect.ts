@@ -9,7 +9,7 @@ interface JWTUserData {
 
 export async function protect(req: { cookies: { authToken?: string } }): Promise<JWTUserData> {
   return new Promise((resolve, reject) => {
-    const token = req.cookies?.authToken;
+    const token =req.cookies?.authToken 
     if (!token) {
       reject(new Error("No token provided"));
       return;
