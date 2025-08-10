@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { Message } from "../models/message.js";
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
-import { protect } from "@/middleware/protect.js";
+import { protect } from "../middleware/protect.js";
 
 interface JWTUserData {
   _id: string;
