@@ -1,28 +1,24 @@
-import express from "express"
-import  registercontroller from '../controllers/registercontroller.js';
-import { getMessages } from '../controllers/messagecontroller.js';
+import express from "express";
+import { Request, Response } from 'express';
+import mongoose from 'mongoose';
+
+// Controllers
+import registerController from '../controllers/registercontroller.js';
 import { peoplecontroller } from '../controllers/peoplecontroller.js';
-import  logincontroller  from '../controllers/logincontroller.js';
-import { verifyEmail } from '../controllers/verfiyemail.js';
-import  {profileController}  from '../controllers/profilecontroller.js';
-import { profileUpdate } from '../controllers/profilecontroller.js';
-import { Request,Response } from 'express';
-import { clearConversation } from '../controllers/messagecontroller.js';
+import loginController from '../controllers/logincontroller.js';
+import { profileController, profileUpdate } from '../controllers/profilecontroller.js';
+import { getMessages, deleteMessage, clearConversation } from '../controllers/messagecontroller.js';
+
+// Middleware
+import { authenticate } from '../middleware/authmiddleware.js';
+import { validateMessageParticipants } from '../middleware/messagemiddleware.js';
 
 const router = express.Router();
 
-router.post("/register", registercontroller);
-router.post("/login", logincontroller);
-// router.get("/:id/verify/:token", verifyEmail);
-router.get("/profile", profileController);
-router.get("/messages/:userId", getMessages);
-
-router.get("/people", peoplecontroller);
-
-router.put("/profile/update", profileUpdate);
-router.delete('/messages/clear-conversation',clearConversation);
-// In your auth routes
-router.post('/logout', (req:Request, res:Response) => {
+// Authentication Routes
+router.post("/register", registerController);
+router.post("/login", loginController);
+router.post("/logout", (req: Request, res: Response) => {
   try {
     res.clearCookie('authToken', {
       httpOnly: true,
@@ -36,5 +32,33 @@ router.post('/logout', (req:Request, res:Response) => {
     res.status(500).json({ message: 'Logout failed' });
   }
 });
+
+// Profile Routes
+router.get("/profile",  profileController);
+router.put("/profile/update", profileUpdate);
+
+// People Routes
+router.get("/people", peoplecontroller);
+
+// Message Routes
+router.get(
+  '/messages/:userId',
+  authenticate,
+  validateMessageParticipants,
+  getMessages
+);
+
+router.delete(
+  '/messages/:messageId',
+  authenticate,
+  deleteMessage
+);
+
+router.delete(
+  '/messages/clear-conversation/:userId',
+  authenticate,
+  validateMessageParticipants,
+  clearConversation
+);
 
 export default router;
