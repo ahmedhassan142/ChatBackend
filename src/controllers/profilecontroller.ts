@@ -88,7 +88,7 @@ const defaultAvatars = [
 // Profile Controller
 export const profileController = async (req: Request, res: Response) => {
   try {
-    const token = req.cookies?.authToken;
+    const token = req.cookies?.authToken || req.headers.authorization?.split(" ")[1];
     if (!token) {
       return res.status(401).json({ error: "Authentication required" });
     }
