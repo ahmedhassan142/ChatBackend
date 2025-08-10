@@ -27,7 +27,7 @@ export const getMessages = async (req: Request, res: Response) => {
       deleted: { $ne: true } // Exclude soft-deleted messages
     }).sort({ createdAt: 1 });
 
-    res.json(messages);
+    res.status(200).json(messages);
   } catch (error) {
     console.error("Error in messageController:", error);
     res.status(500).json({ message: "Internal Server Error" });
