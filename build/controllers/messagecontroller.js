@@ -47,7 +47,7 @@ const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(200).json({
             status: 'success',
             results: messages.length,
-            data: messages
+            messages
         });
     }
     catch (error) {
