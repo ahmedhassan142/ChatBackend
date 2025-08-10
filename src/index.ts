@@ -22,7 +22,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
-      "https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app",
+      process.env.NEXT_PUBLIC_BASE_URL||'https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app',
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
