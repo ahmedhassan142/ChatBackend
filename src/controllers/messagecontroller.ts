@@ -7,7 +7,6 @@ import { Message } from '../models/message';
 
 export const getMessages = async (req: Request, res: Response) => {
   try {
-    // Add null check for req.user
     if (!req.user) {
       return res.status(401).json({
         status: 'fail',
@@ -18,7 +17,6 @@ export const getMessages = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const ourUserId = req.user._id;
 
-    // Validate userId format
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({
         status: 'fail',
@@ -36,16 +34,18 @@ export const getMessages = async (req: Request, res: Response) => {
     .sort({ createdAt: 1 })
     .lean();
 
+    // Return consistent structure - array directly in data property
     res.status(200).json({
       status: 'success',
-      results: messages.length,
-      messages 
+      data: messages // Changed from 'messages' to 'data'
     });
+
   } catch (error) {
     console.error('Error fetching messages:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to fetch messages'
+      message: 'Failed to fetch messages',
+      data: [] // Always return array even on error
     });
   }
 };

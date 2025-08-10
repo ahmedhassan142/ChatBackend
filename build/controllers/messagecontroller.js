@@ -19,7 +19,6 @@ const message_1 = require("../models/message");
 // The Request type is already properly extended in authmiddleware.ts
 const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Add null check for req.user
         if (!req.user) {
             return res.status(401).json({
                 status: 'fail',
@@ -28,7 +27,6 @@ const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         const { userId } = req.params;
         const ourUserId = req.user._id;
-        // Validate userId format
         if (!mongoose_1.default.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({
                 status: 'fail',
@@ -44,17 +42,18 @@ const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         })
             .sort({ createdAt: 1 })
             .lean();
+        // Return consistent structure - array directly in data property
         res.status(200).json({
             status: 'success',
-            results: messages.length,
-            messages
+            data: messages // Changed from 'messages' to 'data'
         });
     }
     catch (error) {
         console.error('Error fetching messages:', error);
         res.status(500).json({
             status: 'error',
-            message: 'Failed to fetch messages'
+            message: 'Failed to fetch messages',
+            data: [] // Always return array even on error
         });
     }
 });
