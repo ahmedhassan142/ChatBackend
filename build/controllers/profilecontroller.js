@@ -73,9 +73,9 @@ const defaultAvatars = [
 ];
 // Profile Controller
 const profileController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
-        const token = (_a = req.cookies) === null || _a === void 0 ? void 0 : _a.authToken;
+        const token = ((_a = req.cookies) === null || _a === void 0 ? void 0 : _a.authToken) || ((_b = req.headers.authorization) === null || _b === void 0 ? void 0 : _b.split(" ")[1]);
         if (!token) {
             return res.status(401).json({ error: "Authentication required" });
         }

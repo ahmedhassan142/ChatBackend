@@ -34,10 +34,11 @@ const logincontroller = (req, res) => __awaiter(void 0, void 0, void 0, function
         const token = user.generateAuthToken();
         // Set cookie
         res.cookie("authToken", token, {
-            httpOnly: true, // Recommended for security
-            // secure: process.env.NODE_ENV === "production",
-            sameSite: "lax", // or "strict" for better security
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            httpOnly: true,
+            // Must be true in production
+            sameSite: "none", // Required for cross-origin
+            domain: ".vercel.app", // Parent domain for all Vercel deployments
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
         // Also send token in response for clients that prefer that
         res.status(200).json({

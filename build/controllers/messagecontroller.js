@@ -8,94 +8,132 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clearConversation = exports.deleteMessage = exports.getMessages = void 0;
-const protect_js_1 = require("../middleware/protect.js");
-const message_js_1 = require("../models/message.js");
+const mongoose_1 = __importDefault(require("mongoose"));
+const message_1 = require("../models/message");
+// Remove the custom ExpressRequest interface since we're using global type extension
+// The Request type is already properly extended in authmiddleware.ts
 const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // Add null check for req.user
+        if (!req.user) {
+            return res.status(401).json({
+                status: 'fail',
+                message: 'Authentication required'
+            });
+        }
         const { userId } = req.params;
-        const userData = yield (0, protect_js_1.protect)(req);
-        const ourUserId = userData._id;
-        const messages = yield message_js_1.Message.find({
-            sender: { $in: [userId, ourUserId] },
-            recipient: { $in: [userId, ourUserId] },
-            deleted: { $ne: true } // Exclude soft-deleted messages
-        }).sort({ createdAt: 1 });
-        res.json(messages);
+        const ourUserId = req.user._id;
+        // Validate userId format
+        if (!mongoose_1.default.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Invalid user ID format'
+            });
+        }
+        const messages = yield message_1.Message.find({
+            $or: [
+                { sender: ourUserId, recipient: new mongoose_1.default.Types.ObjectId(userId) },
+                { sender: new mongoose_1.default.Types.ObjectId(userId), recipient: ourUserId }
+            ],
+            deleted: { $ne: true }
+        })
+            .sort({ createdAt: 1 })
+            .lean();
+        res.status(200).json({
+            status: 'success',
+            results: messages.length,
+            data: { messages }
+        });
     }
     catch (error) {
-        console.error("Error in messageController:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        console.error('Error fetching messages:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to fetch messages'
+        });
     }
 });
 exports.getMessages = getMessages;
 const deleteMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { messageId } = req.params;
-        const userData = yield (0, protect_js_1.protect)(req);
-        // Find and validate the message
-        const message = yield message_js_1.Message.findOne({
-            _id: messageId,
-            sender: userData._id // Only sender can delete
-        });
-        if (!message) {
-            return res.status(404).json({ message: "Message not found or unauthorized" });
+        if (!req.user) {
+            return res.status(401).json({
+                status: 'fail',
+                message: 'Authentication required'
+            });
         }
-        // Soft delete (recommended)
-        message.deleted = true;
-        message.deletedAt = new Date();
-        yield message.save();
-        res.json({
-            success: true,
-            message: "Message deleted successfully",
-            deletedMessageId: messageId
+        const { messageId } = req.params;
+        // Validate messageId format
+        if (!mongoose_1.default.Types.ObjectId.isValid(messageId)) {
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Invalid message ID format'
+            });
+        }
+        const message = yield message_1.Message.findOneAndUpdate({
+            _id: new mongoose_1.default.Types.ObjectId(messageId),
+            $or: [
+                { sender: req.user._id },
+                { recipient: req.user._id }
+            ]
+        }, { deleted: true }, { new: true });
+        if (!message) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'Message not found or unauthorized'
+            });
+        }
+        res.status(200).json({
+            status: 'success',
+            data: null
         });
     }
     catch (error) {
-        console.error("Error in deleteMessage:", error);
-        res.status(500).json({ message: "Internal Server Error" });
+        console.error('Error deleting message:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Failed to delete message'
+        });
     }
 });
 exports.deleteMessage = deleteMessage;
-// Add this to your backend controller
-// controllers/messages.controller.ts
 const clearConversation = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log('Clear conversation endpoint hit'); // Debug log
-        const { recipientId } = req.query;
-        const userData = yield (0, protect_js_1.protect)(req);
-        console.log(`Recipient ID: ${recipientId}`); // Debug log
-        if (!recipientId || typeof recipientId !== 'string') {
-            console.log('Invalid recipient ID'); // Debug log
-            return res.status(400).json({
-                success: false,
-                message: "Valid recipient ID is required"
+        if (!req.user) {
+            return res.status(401).json({
+                status: 'fail',
+                message: 'Authentication required'
             });
         }
-        const result = yield message_js_1.Message.updateMany({
+        const { userId } = req.params;
+        // Validate userId format
+        if (!mongoose_1.default.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                status: 'fail',
+                message: 'Invalid user ID format'
+            });
+        }
+        yield message_1.Message.updateMany({
             $or: [
-                { sender: userData._id, recipient: recipientId },
-                { sender: recipientId, recipient: userData._id }
+                { sender: req.user._id, recipient: new mongoose_1.default.Types.ObjectId(userId) },
+                { sender: new mongoose_1.default.Types.ObjectId(userId), recipient: req.user._id }
             ]
-        }, {
-            $set: {
-                deleted: true,
-                deletedAt: new Date()
-            }
-        });
-        console.log(`Modified ${result.modifiedCount} messages`); // Debug log
-        res.json({
-            success: true,
-            message: "Conversation cleared successfully",
-            deletedCount: result.modifiedCount
+        }, { deleted: true });
+        res.status(200).json({
+            status: 'success',
+            data: null
         });
     }
     catch (error) {
-        console.error("Error in clearConversation:", error);
+        console.error('Error clearing conversation:', error);
         res.status(500).json({
-            success: false,
-            message: error.message || "Internal Server Error"
+            status: 'error',
+            message: 'Failed to clear conversation'
         });
     }
 });
