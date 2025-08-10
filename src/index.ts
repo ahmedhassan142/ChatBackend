@@ -29,7 +29,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: [
-      "https://chatfrontend-yqkc.vercel.app", // Production URL
+       // Production URL
       "https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app", // Preview URL
      // Fallback (e.g., localhost)
     ],
