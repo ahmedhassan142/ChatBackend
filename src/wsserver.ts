@@ -116,39 +116,49 @@ const wss = new WebSocketServer({
 
     // Message handler
     ws.on('message', async (data: Buffer) => {
-      try {
-        const message = JSON.parse(data.toString());
-        
-        if (message.type === 'ping') {
-          return ws.send(JSON.stringify({ type: 'pong' }));
-        }
+  try {
+    const message = JSON.parse(data.toString());
+    
+    if (message.type === 'ping') return ws.send(JSON.stringify({ type: 'pong' }));
 
-        if (message.recipient && message.text) {
-          const msgDoc = await Message.create({
+    if (message.recipient && message.text) {
+      // Save to database
+      const msgDoc = await Message.create({
+        sender: ws.userId,
+        recipient: message.recipient,
+        text: message.text
+      });
+
+      // Only send to recipient (not back to sender)
+      wss.clients.forEach((client: WebSocket) => {
+        const c = client as CustomWebSocket;
+        if (c.userId === message.recipient && c.readyState === WebSocket.OPEN) {
+          c.send(JSON.stringify({
+            _id: msgDoc._id,
             sender: ws.userId,
+            text: message.text,
             recipient: message.recipient,
-            text: message.text
-          });
-
-          // Broadcast to recipient
-          wss.clients.forEach((client: WebSocket) => {
-            const c = client as CustomWebSocket;
-            if (c.userId === message.recipient && c.readyState === WebSocket.OPEN) {
-              c.send(JSON.stringify({
-                _id: msgDoc._id,
-                sender: ws.userId,
-                text: message.text,
-                recipient: message.recipient,
-                createdAt: msgDoc.createdAt
-              }));
-            }
-          });
+            createdAt: msgDoc.createdAt
+          }));
         }
-      } catch (error) {
-        console.error('Message handling error:', error);
-      }
-    });
+      });
 
+      // Send confirmation back to sender with the saved message
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          _id: msgDoc._id,
+          sender: ws.userId,
+          text: message.text,
+          recipient: message.recipient,
+          createdAt: msgDoc.createdAt,
+          status: 'sent'
+        }));
+      }
+    }
+  } catch (error) {
+    console.error('Message handling error:', error);
+  }
+});
     // Online users notification
     const notifyOnlineUsers = async () => {
       const clients = Array.from(wss.clients) as CustomWebSocket[];

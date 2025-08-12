@@ -111,16 +111,16 @@ const createWebSocketServer = (server) => {
         ws.on('message', (data) => __awaiter(void 0, void 0, void 0, function* () {
             try {
                 const message = JSON.parse(data.toString());
-                if (message.type === 'ping') {
+                if (message.type === 'ping')
                     return ws.send(JSON.stringify({ type: 'pong' }));
-                }
                 if (message.recipient && message.text) {
+                    // Save to database
                     const msgDoc = yield message_js_1.Message.create({
                         sender: ws.userId,
                         recipient: message.recipient,
                         text: message.text
                     });
-                    // Broadcast to recipient
+                    // Only send to recipient (not back to sender)
                     wss.clients.forEach((client) => {
                         const c = client;
                         if (c.userId === message.recipient && c.readyState === ws_1.WebSocket.OPEN) {
@@ -133,6 +133,17 @@ const createWebSocketServer = (server) => {
                             }));
                         }
                     });
+                    // Send confirmation back to sender with the saved message
+                    if (ws.readyState === ws_1.WebSocket.OPEN) {
+                        ws.send(JSON.stringify({
+                            _id: msgDoc._id,
+                            sender: ws.userId,
+                            text: message.text,
+                            recipient: message.recipient,
+                            createdAt: msgDoc.createdAt,
+                            status: 'sent'
+                        }));
+                    }
                 }
             }
             catch (error) {
