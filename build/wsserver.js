@@ -151,28 +151,35 @@ const createWebSocketServer = (server) => {
             }
         }));
         // Online users notification
+        // Add this near the top of your WebSocket server
         const notifyOnlineUsers = () => __awaiter(void 0, void 0, void 0, function* () {
             const clients = Array.from(wss.clients);
-            const onlineUsers = yield Promise.all(clients
+            // Get all unique user IDs from connected clients
+            const onlineUserIds = clients
                 .filter(client => client.readyState === ws_1.WebSocket.OPEN && client.userId)
-                .map((client) => __awaiter(void 0, void 0, void 0, function* () {
-                const user = yield usermodel_js_1.User.findById(client.userId);
-                return {
-                    userId: client.userId,
-                    username: client.username,
-                    avatarLink: user === null || user === void 0 ? void 0 : user.avatarLink
-                };
-            })));
+                .map(client => client.userId);
+            // Fetch complete user details for all online users
+            const onlineUsers = yield usermodel_js_1.User.find({
+                _id: { $in: onlineUserIds }
+            }).lean();
+            // Prepare the online users data
+            const onlineUsersData = onlineUsers.map(user => ({
+                userId: user._id.toString(),
+                username: `${user.firstName} ${user.lastName}`,
+                avatarLink: user.avatarLink
+            }));
+            // Broadcast to all connected clients
             clients.forEach(client => {
                 if (client.readyState === ws_1.WebSocket.OPEN) {
                     client.send(JSON.stringify({
-                        online: onlineUsers.filter(user => user !== null)
+                        type: 'online_users',
+                        online: onlineUsersData.filter(user => user.userId !== client.userId)
                     }));
                 }
             });
         });
-        // Initial notification
-        notifyOnlineUsers();
+        // Call this periodically (e.g., every 30 seconds)
+        setInterval(notifyOnlineUsers, 30000);
         // Cleanup on close
         ws.on('close', () => {
             if (ws.pingInterval)

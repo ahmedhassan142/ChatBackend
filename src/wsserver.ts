@@ -160,33 +160,40 @@ const wss = new WebSocketServer({
   }
 });
     // Online users notification
-    const notifyOnlineUsers = async () => {
-      const clients = Array.from(wss.clients) as CustomWebSocket[];
-      const onlineUsers = await Promise.all(
-        clients
-          .filter(client => client.readyState === WebSocket.OPEN && client.userId)
-          .map(async client => {
-            const user = await User.findById(client.userId);
-            return {
-              userId: client.userId,
-              username: client.username,
-              avatarLink: user?.avatarLink
-            };
-          })
-      );
+   // Add this near the top of your WebSocket server
+const notifyOnlineUsers = async () => {
+  const clients = Array.from(wss.clients) as CustomWebSocket[];
+  
+  // Get all unique user IDs from connected clients
+  const onlineUserIds = clients
+    .filter(client => client.readyState === WebSocket.OPEN && client.userId)
+    .map(client => client.userId);
 
-      clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            online: onlineUsers.filter(user => user !== null)
-          }));
-        }
-      });
-    };
+  // Fetch complete user details for all online users
+  const onlineUsers = await User.find({
+    _id: { $in: onlineUserIds }
+  }).lean();
 
-    // Initial notification
-    notifyOnlineUsers();
+  // Prepare the online users data
+  const onlineUsersData = onlineUsers.map(user => ({
+    userId: user._id.toString(),
+    username: `${user.firstName} ${user.lastName}`,
+    avatarLink: user.avatarLink
+  }));
 
+  // Broadcast to all connected clients
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({
+        type: 'online_users',
+        online: onlineUsersData.filter(user => user.userId !== client.userId)
+      }));
+    }
+  });
+};
+
+// Call this periodically (e.g., every 30 seconds)
+setInterval(notifyOnlineUsers, 30000);
     // Cleanup on close
     ws.on('close', () => {
       if (ws.pingInterval) clearInterval(ws.pingInterval);
