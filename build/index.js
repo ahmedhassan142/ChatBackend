@@ -21,11 +21,11 @@ app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
     origin: [
-        process.env.NEXT_PUBLIC_BASE_URL || 'https://chatfrontend-yqkc-git-main-ahmed-hassans-projects-96c42d63.vercel.app',
+        process.env.NEXT_PUBLIC_BASE_URL || 'https://chatfrontend-git-main-ahmed-hassans-projects-96c42d63.vercel.app',
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "withCredentials"],
 }));
 // Routes
 app.use("/api/user", userroute_js_1.default);
